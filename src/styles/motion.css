@@ -1,0 +1,23 @@
+/* src/styles/motion.css */
+
+/* Tiny utility animations */
+
+@keyframes lift {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
+
+.hover-lift:hover {
+  animation: lift 0.3s ease-in-out;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}

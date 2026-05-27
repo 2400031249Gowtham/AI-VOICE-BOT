@@ -1,0 +1,52 @@
+/* src/styles/theme.css */
+
+:root {
+  /* Color palette */
+  --color-bg-warm-white: #fafafa;           /* warm, light background */
+  --color-surface-ivory: #fdfdf9;           /* subtle ivory surface */
+  --color-primary-lavender: hsl(260, 40%, 92%); /* pastel lavender */
+  --color-primary-indigo: hsl(235, 30%, 78%);   /* muted indigo */
+  --color-accent-blue: hsl(210, 35%, 85%);      /* light blue accent */
+  --color-neutral-gray: #e5e5e5;               /* soft neutral */
+  --color-glass: rgba(255, 255, 255, 0.6);
+
+  /* Shadows and depth */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.12);
+
+  /* Typography */
+  --font-primary: 'Inter', sans-serif;
+  --font-accent: 'Outfit', sans-serif;
+  --font-size-base: 0.9375rem; /* 15px */
+  --line-height-base: 1.6;
+}
+
+/* Global resets */
+html, body, #__next {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-primary);
+  background: var(--color-bg-warm-white);
+  color: #222;
+}
+
+/* Utility classes */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-accent {
+  color: var(--color-primary-indigo);
+}
+
+.bg-glass {
+  backdrop-filter: blur(12px);
+  background: var(--color-glass);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
