@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useCrm } from "@/hooks/useCrm";
+import { useCRMStore } from "@/store/crmStore";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area, LineChart, Line, PieChart, Pie, Cell
@@ -14,7 +14,12 @@ import { Button } from "@/components/ui/button";
 const COLORS = ["hsl(173 80% 50%)", "hsl(43 96% 56%)", "hsl(0 84% 60%)"];
 
 export default function AnalyticsPage() {
-  const { calls, customers, followups, charts, loading } = useCrm();
+  const calls = useCRMStore(s => s.calls ?? []);
+  const customers = useCRMStore(s => s.customers ?? []);
+  const followups = useCRMStore(s => s.followups ?? []);
+  const charts = useCRMStore(s => s.charts ?? {});
+  const loading = useCRMStore(s => s.loading);
+  const isLoaded = !loading?.global;
 
   const getSentimentChartData = () => {
     if (charts.sentimentData) return charts.sentimentData;
@@ -34,16 +39,13 @@ export default function AnalyticsPage() {
 
   const sentimentData = getSentimentChartData();
 
-  if (loading.global) {
+  if (!isLoaded) {
     return (
       <PageContainer>
-        <div className="space-y-6 animate-pulse">
-          <div className="h-14 bg-secondary/30 rounded-xl w-1/3" />
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-24 bg-secondary/30 rounded-xl" />
-            ))}
-          </div>
+        <div className="p-6 space-y-4 text-left">
+          <div className="h-8 w-48 bg-secondary/30 rounded animate-pulse"/>
+          <div className="h-4 w-96 bg-secondary/30 rounded animate-pulse"/>
+          <div className="h-64 w-full bg-secondary/30 rounded animate-pulse"/>
         </div>
       </PageContainer>
     );

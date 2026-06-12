@@ -8,58 +8,91 @@ import AreaChartWrapper from "@/components/charts/AreaChartWrapper";
 import BarChartWrapper from "@/components/charts/BarChartWrapper";
 import InsightCard from "@/components/cards/InsightCard";
 import GlassCard from "@/components/cards/GlassCard";
-
-const areaData = [
-  { name: "Jan", ai: 120, manual: 80 },
-  { name: "Feb", ai: 180, manual: 75 },
-  { name: "Mar", ai: 160, manual: 70 },
-  { name: "Apr", ai: 240, manual: 65 },
-  { name: "May", ai: 280, manual: 60 },
-  { name: "Jun", ai: 320, manual: 55 },
-  { name: "Jul", ai: 350, manual: 50 },
-];
-
-const barData = [
-  { day: "Mon", calls: 65 },
-  { day: "Tue", calls: 82 },
-  { day: "Wed", calls: 73 },
-  { day: "Thu", calls: 95 },
-  { day: "Fri", calls: 88 },
-  { day: "Sat", calls: 42 },
-  { day: "Sun", calls: 35 },
-];
-
-const insights = [
-  {
-    id: 1,
-    icon: <AlertTriangle size={13} />,
-    priority: "High",
-    priorityVariant: "destructive" as const,
-    title: "3 deals at risk of going cold",
-    desc: "Acme, DataFlow, and Quantum haven't been contacted in 5+ days.",
-    action: "Auto-schedule calls",
-  },
-  {
-    id: 2,
-    icon: <TrendingUp size={13} />,
-    priority: "Medium",
-    priorityVariant: "secondary" as const,
-    title: "Pipeline velocity up 23%",
-    desc: "AI outreach converting 2.4× faster than manual calls this month.",
-    action: "View report",
-  },
-  {
-    id: 3,
-    icon: <UserCheck size={13} />,
-    priority: "Info",
-    priorityVariant: "outline" as const,
-    title: "12 leads ready for qualification",
-    desc: "High engagement scoring — ready for human handoff.",
-    action: "Review leads",
-  },
-];
+import { useCRMStore } from "@/store/crmStore";
 
 export default function PerformanceSection() {
+  const calls = useCRMStore((s) => s.calls ?? []);
+  const customers = useCRMStore((s) => s.customers ?? []);
+
+  // 1. Group actual database calls by month (Jan - Jul)
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"];
+  const areaData = months.map((month, idx) => {
+    const count = calls.filter((c) => {
+      const date = new Date(c.date);
+      return !isNaN(date.getTime()) && date.getMonth() === idx;
+    }).length;
+    return { name: month, ai: count, manual: 0 };
+  });
+
+  // 2. Group actual database calls by day of the week
+  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const barData = daysOfWeek.map((day, idx) => {
+    const count = calls.filter((c) => {
+      const date = new Date(c.date);
+      if (isNaN(date.getTime())) return false;
+      // GetDay() returns 0 for Sunday, 1 for Monday, etc. Map to index.
+      const dayNum = date.getDay();
+      const mappedIdx = dayNum === 0 ? 6 : dayNum - 1;
+      return mappedIdx === idx;
+    }).length;
+    return { day, calls: count };
+  });
+
+  // 3. Dynamic insights from real customer statistics
+  const hotLeadsAtRisk = customers.filter(
+    (c) => c.status === "Hot" && (c.lastCalledDaysAgo === undefined || c.lastCalledDaysAgo >= 5)
+  ).length;
+  
+  const warmLeadsCount = customers.filter((c) => c.status === "Warm").length;
+
+  const insights = [
+    {
+      id: 1,
+      icon: <AlertTriangle size={13} />,
+      priority: "High",
+      priorityVariant: "destructive" as const,
+      title: `${hotLeadsAtRisk} hot leads pending outreach`,
+      desc: "Hot exporters that haven't had an active discussion in 5+ days.",
+      action: "Auto-schedule calls",
+    },
+    {
+      id: 2,
+      icon: <TrendingUp size={13} />,
+      priority: "Medium",
+      priorityVariant: "secondary" as const,
+      title: "Outbound pipeline tracking active",
+      desc: `Currently monitoring ${customers.length} exporter profiles from the database.`,
+      action: "View reports",
+    },
+    {
+      id: 3,
+      icon: <UserCheck size={13} />,
+      priority: "Info",
+      priorityVariant: "outline" as const,
+      title: `${warmLeadsCount} exporters ready for review`,
+      desc: "Qualified warm exporters awaiting follow-up updates.",
+      action: "Review leads",
+    },
+  ];
+
+  // 4. Summary metrics calculated dynamically
+  const totalCalls = calls.length;
+  const aiHandled = calls.filter((c) => c.status === "Completed").length;
+  const aiRate = totalCalls > 0 ? ((aiHandled / totalCalls) * 100).toFixed(1) + "%" : "0.0%";
+
+  // Aggregate call durations
+  const totalSeconds = calls.reduce((acc, c) => {
+    const parts = String(c.duration || "").split(":");
+    if (parts.length === 2) {
+      return acc + parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+    }
+    const num = parseInt(String(c.duration), 10);
+    return acc + (isNaN(num) ? 0 : num);
+  }, 0);
+  
+  const avgSeconds = totalCalls > 0 ? Math.round(totalSeconds / totalCalls) : 0;
+  const avgTime = `${Math.floor(avgSeconds / 60)}m ${avgSeconds % 60}s`;
+
   return (
     <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
       {/* Chart Column */}
@@ -71,7 +104,7 @@ export default function PerformanceSection() {
         >
           <ChartContainer
             title="Performance Overview"
-            description="AI vs manual call trends"
+            description="AI call metrics summary"
             action={
               <Button variant="ghost" size="xs" className="text-muted-foreground gap-1">
                 Details <ArrowUpRight size={11} />
@@ -117,10 +150,10 @@ export default function PerformanceSection() {
               {/* Summary Indicators */}
               <div className="grid grid-cols-4 gap-2 pt-4 border-t border-border">
                 {[
-                  { label: "Total", value: "480", color: "text-foreground" },
-                  { label: "AI Handled", value: "349", color: "text-chart-1" },
-                  { label: "AI Rate", value: "72.7%", color: "text-chart-2" },
-                  { label: "Avg Time", value: "3m 42s", color: "text-foreground" },
+                  { label: "Total", value: String(totalCalls), color: "text-foreground" },
+                  { label: "AI Handled", value: String(aiHandled), color: "text-chart-1" },
+                  { label: "AI Rate", value: aiRate, color: "text-chart-2" },
+                  { label: "Avg Time", value: avgTime, color: "text-foreground" },
                 ].map((item) => (
                   <div key={item.label} className="text-center">
                     <p className={`text-base font-bold ${item.color}`}>{item.value}</p>

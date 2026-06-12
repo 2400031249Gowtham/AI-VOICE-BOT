@@ -80,22 +80,33 @@ export const CallTranscripts: React.FC<CallTranscriptsProps> = ({ call }) => {
         </h4>
         
         <div className="space-y-4 max-h-[190px] overflow-y-auto pr-1">
-          {call.transcript.map((line, idx) => (
-            <div key={idx} className={`flex items-start gap-2.5 ${line.speaker === "user" ? "flex-row-reverse text-right" : ""}`}>
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[8px] font-semibold ${
-                line.speaker === "bot" ? "bg-primary/10 text-primary border border-primary/20" : "bg-secondary border border-border"
-              }`}>
-                {line.speaker === "bot" ? <Bot size={10} /> : <User size={10} />}
+          {Array.isArray(call.transcript) ? (
+            call.transcript.map((line, idx) => (
+              <div key={idx} className={`flex items-start gap-2.5 ${line.speaker === "user" ? "flex-row-reverse text-right" : ""}`}>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[8px] font-semibold ${
+                  line.speaker === "bot" ? "bg-primary/10 text-primary border border-primary/20" : "bg-secondary border border-border"
+                }`}>
+                  {line.speaker === "bot" ? <Bot size={10} /> : <User size={10} />}
+                </div>
+                <div className={`max-w-[80%] p-2.5 rounded-2xl text-xs leading-relaxed ${
+                  line.speaker === "bot"
+                    ? "bg-secondary/40 border border-border/50 rounded-tl-none"
+                    : "bg-primary text-primary-foreground rounded-tr-none"
+                }`}>
+                  {line.text}
+                </div>
               </div>
-              <div className={`max-w-[80%] p-2.5 rounded-2xl text-xs leading-relaxed ${
-                line.speaker === "bot"
-                  ? "bg-secondary/40 border border-border/50 rounded-tl-none"
-                  : "bg-primary text-primary-foreground rounded-tr-none"
-              }`}>
-                {line.text}
+            ))
+          ) : (
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[8px] font-semibold bg-secondary border border-border">
+                <Info size={10} />
+              </div>
+              <div className="max-w-[100%] p-2.5 rounded-2xl text-xs leading-relaxed bg-secondary/40 border border-border/50">
+                {typeof call.transcript === 'string' && call.transcript.trim() !== '' ? call.transcript : "No transcript recorded for this call session."}
               </div>
             </div>
-          ))}
+          )}
         </div>
       </div>
 

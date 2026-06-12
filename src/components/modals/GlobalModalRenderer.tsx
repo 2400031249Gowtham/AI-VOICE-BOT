@@ -9,7 +9,7 @@ import { useCRMStore } from "@/store/crmStore";
 
 export function GlobalModalRenderer() {
   const { activeModal, closeModal } = useModal();
-  const { logout } = useCRMStore();
+  const logout = useCRMStore(s => s.logout);
 
   const handleLogoutConfirm = () => {
     logout();

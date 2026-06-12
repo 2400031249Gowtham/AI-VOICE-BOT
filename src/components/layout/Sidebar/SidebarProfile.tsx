@@ -10,7 +10,8 @@ interface SidebarProfileProps {
 }
 
 export default function SidebarProfile({ collapsed }: SidebarProfileProps) {
-  const { currentUser, logout } = useCRMStore();
+  const currentUser = useCRMStore(s => s.currentUser);
+  const logout = useCRMStore(s => s.logout);
 
   const displayName = currentUser?.name ?? "Workspace";
   const initials = displayName
@@ -50,7 +51,7 @@ export default function SidebarProfile({ collapsed }: SidebarProfileProps) {
         </AnimatePresence>
         {!collapsed && (
           <button
-            onClick={logout}
+            onClick={() => logout()}
             title="Sign out"
             className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 cursor-pointer"
           >

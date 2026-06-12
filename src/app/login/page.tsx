@@ -3,7 +3,9 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Phone, Mail, Lock, ArrowRight, Eye, EyeOff, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,6 +14,7 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const { login, loading } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -25,24 +28,28 @@ export default function LoginPage() {
     }
   }, [mounted]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (typeof window !== "undefined") {
-      // Check if user registered previously to get company info
-      const registered = JSON.parse(localStorage.getItem("voxai_registered_users") || "[]");
-      const match = registered.find((u: any) => u.email === email);
-      localStorage.setItem("voxai_current_user", JSON.stringify({
-        email: email || "user@example.com",
-        name: match?.name || (email ? email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1) : "Workspace Admin"),
-        company: match?.company,
-      }));
+    if (loading) return;
+    
+    try {
+      const success = await login({ email, password });
+      if (success) {
+        toast.success("Successfully logged in");
+        if (typeof window !== "undefined") {
+          window.location.href = "/dashboard";
+        }
+      } else {
+        toast.error("Invalid credentials. Please try again.");
+      }
+    } catch (err) {
+      toast.error("An error occurred during login.");
     }
-    window.location.href = "/dashboard";
   };
 
   const handleDemoAccess = () => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("voxai_current_user", JSON.stringify({
+      localStorage.setItem("voxai_auth_user", JSON.stringify({
         email: "demo@voxai.co",
         name: "Demo Admin",
       }));
@@ -156,10 +163,11 @@ export default function LoginPage() {
             {/* Submit */}
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity glow-blue"
+              disabled={loading}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity glow-blue ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              Sign In
-              <ArrowRight size={16} />
+              {loading ? "Signing in..." : "Sign In"}
+              {!loading && <ArrowRight size={16} />}
             </button>
           </form>
 

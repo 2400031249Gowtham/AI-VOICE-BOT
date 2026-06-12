@@ -19,6 +19,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   onSendMessage
 }) => {
   const [inputText, setInputText] = useState("");
+  const [isComposing, setIsComposing] = useState(false);
 
   const handleSend = () => {
     if (!inputText.trim()) return;
@@ -79,8 +80,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             placeholder="Type a Teleglish or Telugu message..."
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
             className="flex-1 h-8.5 text-xs bg-secondary/40 border-border focus:border-primary/50 text-foreground"
-            onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !isComposing) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
           />
           <Button size="sm" className="h-8.5 text-xs gap-1.5 px-3" onClick={handleSend}>
             <Send size={11} /> Send

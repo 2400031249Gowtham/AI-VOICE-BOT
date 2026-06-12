@@ -3,21 +3,37 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState } from "react";
+import { authService } from "@/services/authService";
 import { Phone, Mail, Lock, ArrowRight, Eye, EyeOff, User, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "", company: "" });
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Persist signup data so login can recognize returning user
-    if (typeof window !== "undefined") {
-      const users = JSON.parse(localStorage.getItem("voxai_registered_users") || "[]");
-      users.push({ name: form.name, email: form.email, company: form.company });
-      localStorage.setItem("voxai_registered_users", JSON.stringify(users));
+    if (loading) return;
+    setLoading(true);
+
+    try {
+      await authService.signup({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        company: form.company,
+        role: "OPERATOR"
+      });
+      toast.success("Account created successfully!");
+      if (typeof window !== "undefined") {
+        window.location.href = "/login?signup=success";
+      }
+    } catch (err) {
+      toast.error("Failed to create account. Email may already be in use.");
+    } finally {
+      setLoading(false);
     }
-    window.location.href = "/login?signup=success";
   };
 
   const update = (field: string, value: string) =>
@@ -148,10 +164,11 @@ export default function SignupPage() {
             {/* Submit */}
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity glow-blue"
+              disabled={loading}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity glow-blue ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              Create Account
-              <ArrowRight size={16} />
+              {loading ? "Creating Account..." : "Create Account"}
+              {!loading && <ArrowRight size={16} />}
             </button>
           </form>
         </div>

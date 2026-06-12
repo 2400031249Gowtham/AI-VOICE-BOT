@@ -12,7 +12,7 @@ export default function PageContainer({ children, className }: PageContainerProp
   return (
     <AnimatedSection
       variant="fadeInUp"
-      className={cn("p-4 md:p-6 lg:p-8 max-w-[1440px] mx-auto space-y-6 relative z-10", className)}
+      className={cn("w-full px-6 py-4 md:py-6 lg:py-8 max-w-[1440px] mx-auto space-y-6 relative z-10", className)}
     >
       {children}
     </AnimatedSection>

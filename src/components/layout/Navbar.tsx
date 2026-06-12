@@ -37,7 +37,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({ sidebarCollapsed, onMobileMenuToggle }: NavbarProps) {
-  const { currentUser } = useCRMStore();
+  const currentUser = useCRMStore(s => s.currentUser);
   const { openModal } = useModal();
 
   const displayName = currentUser?.name ?? "Admin";
@@ -47,11 +47,6 @@ export default function Navbar({ sidebarCollapsed, onMobileMenuToggle }: NavbarP
     .join("")
     .toUpperCase()
     .slice(0, 2);
-
-  const handleLogoutConfirm = () => {
-    logout();
-    setShowLogoutModal(false);
-  };
 
   return (
     <>

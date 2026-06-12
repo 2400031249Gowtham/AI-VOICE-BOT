@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState, useEffect, useRef } from "react";
-import { useCrm } from "@/hooks/useCrm";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useCRMStore } from "@/store/crmStore";
 import { 
   Bot, Mic, MicOff, Settings2, Play, Square, Settings, Volume2, 
   MessageSquare, User, Sparkles, Languages, AlertTriangle, ShieldCheck, Activity, Award, PhoneCall
@@ -11,32 +11,36 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import PageContainer from "@/components/layout/PageContainer";
 import GlassCard from "@/components/cards/GlassCard";
+import { AssistantDialer } from "@/components/dialer/DialerComponents";
 
 export default function AssistantPage() {
-  const { activeCall, settings, customers, triggerOutboundCall } = useCrm();
-  const [messages, setMessages] = useState<{ speaker: string; text: string }[]>([]);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const activeCall = useCRMStore(s => s.activeCall);
+  const settings = useCRMStore(s => s.settings);
+  const customers = useCRMStore(s => s.customers ?? []);
+  const triggerOutboundCall = useCRMStore(s => s.triggerOutboundCall);
+  const loading = useCRMStore(s => s.loading);
+  const isLoaded = !loading?.global;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
-  // Sync with active call transcript if it is running
-  useEffect(() => {
-    if (activeCall) {
-      setMessages(activeCall.transcript);
-    } else {
-      setMessages([
-        { speaker: "bot", text: "Namaskaram! I am VoxAI Telugu Representative. Twilio trunks are active and idle." }
-      ]);
-    }
-  }, [activeCall?.transcript, activeCall]);
+  // Filter hot opportunities and sort by leadScore descending
+  const hotOpportunities = useMemo(() => {
+    return [...customers]
+      .filter(c => c.status === "Hot")
+      .sort((a, b) => (b.leadScore ?? 0) - (a.leadScore ?? 0));
+  }, [customers]);
 
-  // Keep chat transcript scrolled to bottom
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  // Filter hot opportunities
-  const hotOpportunities = customers.filter(c => c.status === "Hot" && c.leadScore >= 85);
+  if (!isLoaded) {
+    return (
+      <PageContainer>
+        <div className="p-6 space-y-4 text-left">
+          <div className="h-8 w-48 bg-secondary/30 rounded animate-pulse"/>
+          <div className="h-4 w-96 bg-secondary/30 rounded animate-pulse"/>
+          <div className="h-64 w-full bg-secondary/30 rounded animate-pulse"/>
+        </div>
+      </PageContainer>
+    );
+  }
 
   // Suggestions based on active call or hot leads
   const suggestions = [
@@ -81,14 +85,20 @@ export default function AssistantPage() {
             <div className="space-y-2 text-xs">
               {[
                 { label: "Engine Model", value: "VoxAI Telugu Hybrid v2.1" },
-                { label: "Audio Latency", value: "142ms" },
+                { label: "Language Mode", value: settings.tamilMode ? "Tamil & Telugu Dual-Accent" : "Mixed Telugu & English (Teleglish)" },
+                { label: "Memory Engine", value: settings.memoryEngine || "Advanced Contextual Memory" },
+                { label: "Emotional Intel", value: settings.emotionalResponse || "Empathetic/Helpful" },
                 { label: "Neural Accent Weight", value: `${(settings.teluguAccentWeight * 100).toFixed(0)}% Telugu Bias` },
                 { label: "EleventLabs Voice profile", value: "Priya (Vijayawada Custom)" },
-                { label: "Auto-Invoicing", value: settings.autoInvoicing ? "Active" : "Disabled" }
+                { label: "Auto-Invoicing", value: settings.autoInvoicing ? "Active" : "Disabled" },
+                { label: "WhatsApp Auto-Send", value: settings.whatsappAutoSend ? "Active" : "Disabled" },
+                { label: "Email Auto-Send", value: settings.emailAutoSend ? "Active" : "Disabled" },
+                { label: "Callback Scheduler", value: settings.callbackScheduler ? "Enabled" : "Disabled" },
+                { label: "Export Industry Mode", value: settings.industryMode || "Export Licensing" }
               ].map((stat) => (
-                <div key={stat.label} className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/30 border border-border/40">
-                  <span className="text-muted-foreground">{stat.label}</span>
-                  <span className="font-semibold text-foreground">{stat.value}</span>
+                <div key={stat.label} className="flex items-center justify-between p-2 rounded-lg bg-secondary/30 border border-border/40">
+                  <span className="text-muted-foreground text-[10px]">{stat.label}</span>
+                  <span className="font-semibold text-foreground text-[10px] text-right ml-2">{stat.value}</span>
                 </div>
               ))}
             </div>
@@ -102,7 +112,7 @@ export default function AssistantPage() {
                 <div key={opp.id} className="p-2.5 rounded-lg bg-secondary/35 border border-border/40 flex justify-between items-center text-xs">
                   <div>
                     <span className="font-bold text-foreground block leading-tight">{opp.name}</span>
-                    <span className="text-[9px] text-muted-foreground">{opp.company}</span>
+                    <span className="text-[9px] text-muted-foreground">{opp.company} · Score: <strong className="text-chart-4">{opp.leadScore ?? 85}</strong></span>
                   </div>
                   <Button 
                     size="sm" 
@@ -131,61 +141,16 @@ export default function AssistantPage() {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <GlassCard className="flex-1 flex flex-col overflow-hidden relative p-0">
-            {/* Header */}
-            <div className="p-3.5 border-b border-border/50 flex items-center justify-between bg-card/45">
-              <div className="flex items-center gap-2 text-left">
-                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
-                  <Bot size={14} className="text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold">Active speech monitoring</h3>
-                  <p className="text-[9px] text-muted-foreground">Monitor Twilio speech synthesis stream in real-time</p>
+            {activeCall ? (
+              <AssistantDialer />
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-center p-8 text-muted-foreground/50">
+                <div className="flex flex-col items-center gap-3">
+                  <Bot size={32} className="opacity-20" />
+                  <p className="text-xs">No active calls in progress.<br/>System standing by.</p>
                 </div>
               </div>
-              
-              <Badge variant="outline" className={`text-[9px] px-2 h-5 gap-1 ${
-                activeCall ? "bg-destructive/10 text-destructive border-destructive/20 animate-pulse" : "bg-secondary text-muted-foreground"
-              }`}>
-                {activeCall ? "Trunk Busy" : "Trunk Idle"}
-              </Badge>
-            </div>
-
-            {/* Scrolling transcript bubbles */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 text-xs leading-normal">
-              {messages.map((msg, idx) => (
-                <div 
-                  key={idx} 
-                  className={`flex items-start gap-2.5 ${msg.speaker === "user" ? "flex-row-reverse text-right" : ""}`}
-                >
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    msg.speaker === "bot" 
-                      ? "bg-primary/10 text-primary border border-primary/20 shadow-[0_0_12px_rgba(120,119,255,0.1)]" 
-                      : "bg-secondary border border-border"
-                  }`}>
-                    {msg.speaker === "bot" ? <Bot size={12} /> : <User size={12} />}
-                  </div>
-                  <div className={`max-w-[80%] p-2.5 rounded-2xl ${
-                    msg.speaker === "bot"
-                      ? "bg-secondary/40 border border-border rounded-tl-sm text-foreground"
-                      : "bg-primary text-primary-foreground rounded-tr-sm"
-                  }`}>
-                    {msg.text}
-                  </div>
-                </div>
-              ))}
-              
-              {activeCall && activeCall.status === "connected" && activeCall.transcript.length === 0 && (
-                <div className="text-center py-6 text-muted-foreground text-[10px] animate-pulse">
-                  Establishing secure audio stream to exporter...
-                </div>
-              )}
-            </div>
-
-            {/* Footer indicators */}
-            <div className="p-3 bg-secondary/15 border-t border-border flex items-center justify-between text-[10px] text-muted-foreground">
-              <span className="flex items-center gap-1"><Volume2 size={12}/> Audio stream output: Priya Neural Voice</span>
-              <span className="font-mono">{activeCall ? `Duration: ${activeCall.duration}s` : "Trunk: Channel 1 Idle"}</span>
-            </div>
+            )}
           </GlassCard>
         </motion.div>
 

@@ -23,10 +23,7 @@ export function useSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Hydrate from localStorage on mount
-  useEffect(() => {
-    setCollapsed(getStoredCollapsed());
-  }, []);
+
 
   const toggleCollapsed = useCallback(() => {
     setCollapsed((prev) => {

@@ -1,13 +1,15 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { useModal } from "@/context/ModalContext";
 import { useCRMStore } from "@/store/crmStore";
 import { LogOut, X, Monitor, Settings, Palette, Plus, HelpCircle, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import GlassCard from "@/components/cards/GlassCard";
 
 export function GlobalModalProvider() {
-  const { activeModal, closeModal, logout } = useCRMStore();
+  const { activeModal, closeModal } = useModal();
+  const logout = useCRMStore(s => s.logout);
 
   const handleLogoutConfirm = () => {
     logout();

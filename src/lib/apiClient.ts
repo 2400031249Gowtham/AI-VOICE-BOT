@@ -1,40 +1,49 @@
-"use client";
-
 import axios from "axios";
 
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:8080";
+
 const apiClient = axios.create({
-  baseURL: typeof window !== "undefined"
-    ? (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000")
-    : "http://localhost:8000",
+  baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 5000, // 5 seconds — faster fallback to local data
+  timeout: 5000,
 });
 
 // Auth token injection
 apiClient.interceptors.request.use((config) => {
+
   if (typeof window !== "undefined") {
-    const user = localStorage.getItem("voxai_current_user");
+
+    const user =
+      localStorage.getItem("voxai_auth_user");
+
     if (user) {
+
       try {
+
         const parsed = JSON.parse(user);
-        config.headers["X-User-Email"] = parsed.email;
+
+        config.headers["X-User-Email"] =
+          parsed.email;
+
       } catch {
+
         // silent
+
       }
     }
   }
+
   return config;
 });
 
-// Silent error handling — never expose raw network errors to console
+// Silent error handling
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Silently reject — calling services handle fallback gracefully
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default apiClient;

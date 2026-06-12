@@ -1,5 +1,5 @@
 export interface Customer {
-  id: number;
+  id: string;
   name: string;
   email: string;
   phone: string;
@@ -14,6 +14,7 @@ export interface Customer {
   initials: string;
   leadScore: number;
   lastInteractionSummary: string;
+  aiSummary?: string;
   companyDetails?: string;
   notes?: string;
   lastCalledDaysAgo?: number;
@@ -21,11 +22,16 @@ export interface Customer {
   futureCallbackDate?: string;
   invoiceStatus?: "Paid" | "Unpaid" | "Pending" | "None";
   marketHistory?: { date: string; description: string; rate: number }[];
+  licenseType?: string;
+  availabilityStatus?: string;
+  lastRateDiscussed?: number;
+  nextFollowupDate?: string;
+  whatsappSent?: boolean;
 }
 
 export interface TimelineEvent {
-  id: number;
-  customerId: number;
+  id: string;
+  customerId: string;
   type: "call" | "whatsapp" | "email" | "note";
   date: string;
   description: string;
@@ -34,8 +40,8 @@ export interface TimelineEvent {
 }
 
 export interface CallLog {
-  id: number;
-  customerId: number;
+  id: string;
+  customerId: string;
   customerName: string;
   company: string;
   initials: string;
@@ -44,14 +50,14 @@ export interface CallLog {
   status: "Completed" | "No Answer" | "Busy" | "Voicemail";
   sentiment: "Positive" | "Neutral" | "Negative";
   summary: string;
-  transcript: { speaker: "bot" | "user"; text: string }[];
+  transcript: string | { speaker: "bot" | "user" | "AI" | "Customer"; text: string; time?: string | Date }[];
   leadClassification?: string;
   interestLevel?: "High" | "Medium" | "Low";
 }
 
 export interface FollowUp {
-  id: number;
-  customerId: number;
+  id: string;
+  customerId: string;
   customerName: string;
   company: string;
   initials: string;
@@ -76,8 +82,8 @@ export interface MarketRate {
 }
 
 export interface MessageLog {
-  id: number;
-  customerId: number;
+  id: string;
+  customerId: string;
   type: "whatsapp" | "email";
   content: string;
   timestamp: string;
@@ -98,4 +104,14 @@ export interface Settings {
   followUpDelayDays: number;
   rateThresholdAlerts: boolean;
   autoInvoicing: boolean;
+  tamilMode?: boolean;
+  memoryEngine?: string;
+  emotionalResponse?: string;
+  exportKeywords?: string;
+  whatsappAutoSend?: boolean;
+  emailAutoSend?: boolean;
+  callbackScheduler?: boolean;
+  industryMode?: string;
+  sidebar?: 'Expanded' | 'Collapsed';
+  theme?: 'Light' | 'Dark';
 }

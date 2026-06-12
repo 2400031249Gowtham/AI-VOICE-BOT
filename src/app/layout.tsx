@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 };
 
 import { ModalProvider } from "@/context/ModalContext";
+import { FetchInterceptor } from "@/components/FetchInterceptor";
 
 export default function RootLayout({
   children,
@@ -26,10 +27,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full bg-background text-foreground">
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} h-full antialiased`}>
+      <body suppressHydrationWarning className="min-h-full bg-background text-foreground">
         <ThemeProvider>
           <ModalProvider>
+            <FetchInterceptor />
             {children}
           </ModalProvider>
         </ThemeProvider>

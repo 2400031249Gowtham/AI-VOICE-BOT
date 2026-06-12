@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useCRMStore } from "@/store/crmStore";
 
 export default function DashboardHeader() {
-  const { currentUser, stats } = useCRMStore();
+  const currentUser = useCRMStore(s => s.currentUser);
+  const stats = useCRMStore(s => s.stats);
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
